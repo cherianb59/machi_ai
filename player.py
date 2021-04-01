@@ -11,6 +11,8 @@ from random import shuffle
 
 from numpy.random import choice as rchoice
 
+from functools import reduce
+
 use_max_probability = True
 
 #this makes the probabilities slightly less deterministic
@@ -36,7 +38,7 @@ def choose_from_probs(probs, constraint_mask = None):
 	
 	probs = probs/np.sum(probs)
 	choice = rchoice(range(len(probs)), size=1, p=probs)
-	return choice[0]
+	return(choice[0])
 
 class Player(object):
 	def __init__(self, game, order, name=''):
@@ -106,7 +108,7 @@ class Player(object):
 		self.coins = 3
 		self.order = order
 		self.win = 0
-		return self 
+		return(self )
 
 	def train_ai(self, reset=False):
 		"""trains own 4 AI, and then resets history if desired"""
@@ -181,7 +183,7 @@ class Player(object):
 			self.AI.steal_ai = load_model(self.name + '_steal_ai_%d.h5' % self.id)
 			self.AI.swap_ai = load_model(self.name + '_swap_ai_%d.h5' % self.id)
 			self.AI.buy_ai = load_model(self.name + '_buy_ai_%d.h5' % self.id)
-		print 'loaded ai'
+		print('loaded ai')
 
 	def save_ai(self):
 		#dice
@@ -198,11 +200,11 @@ class Player(object):
 			ai.steal_ai.save(self.name + '_steal_ai_%d.h5' % self.id)
 			ai.swap_ai.save(self.name + '_swap_ai_%d.h5' % self.id)
 			ai.buy_ai.save(self.name + '_buy_ai_%d.h5' % self.id)
-		print 'saved AI'
+		print('saved AI')
 
 
 	def get_next_player(self, offset=1):
-		return self.game.get_next_player(self, offset)
+		return(self.game.get_next_player(self, offset))
 
 	def serialize_data(self):
 		"""this vectorizes the number of buildings in each category a player has;
@@ -212,11 +214,11 @@ class Player(object):
 			building_vector[i][self.buildings[building]] = 1
 		flat_vector = [x for sub in building_vector for x in sub]
 		flat_vector.append(self.coins)
-		return flat_vector
+		return(flat_vector)
 
 	def complete_serialize(self):
 		"""this returns the complete and sufficient game state based on the player whose turn it is"""
-		return reduce(list.__add__, [self.get_next_player(offset).serialize_data() for offset in range(4)])
+		return(reduce(list.__add__, [self.get_next_player(offset).serialize_data() for offset in range(4)]))
 
 	def take_turn(self):
 		self.double=False
@@ -247,15 +249,15 @@ class Player(object):
 
 		#buy
 		self.decide_buy()
-		if self.buy_choice <> 19:
-			self.buildings[BUILDING_ORDER[self.buy_choice]] += 1
-			self.game.building_supply[BUILDING_ORDER[self.buy_choice]] -= 1
-			self.coins -= building_cost[BUILDING_ORDER[self.buy_choice]]
+		if self.buy_choice != 19:
+			self.buildings[list(BUILDING_ORDER)[self.buy_choice]] += 1
+			self.game.building_supply[list(BUILDING_ORDER)[self.buy_choice]] -= 1
+			self.coins -= building_cost[list(BUILDING_ORDER)[self.buy_choice]]
 			if self.game.record_game:
 				self.game.game_record_file.write('BUY: player %d bought a(n) %s (now has %d of them)\n' % 
 					(self.order, 
-					BUILDING_ORDER[self.buy_choice],
-					self.buildings[BUILDING_ORDER[self.buy_choice]]))
+					list(BUILDING_ORDER)[self.buy_choice],
+					self.buildings[list(BUILDING_ORDER)[self.buy_choice]]))
 
 		elif self.game.record_game:
 			self.game.game_record_file.write('BUY: player %d chooses not to buy anything\n' % self.order )
@@ -271,7 +273,7 @@ class Player(object):
 	def decide_dice(self):
 		if self.buildings['station'] == 0:
 			self.roll=1
-			return 0
+			return(0)
 		probs = self.AI.eval_dice()
 		choice = choose_from_probs(probs)
 		if choice==0:
@@ -280,14 +282,14 @@ class Player(object):
 			roll = 1
 		self.roll = roll 
 		self.AI.record_dice()
-		return 0
+		return(0)
 
 	def decide_reroll(self):
 		#note that you must reroll the same number of dice you originally rolled
 		#yes, this is from the creators
 		if self.buildings['radio_tower'] == 0:
 			self.reroll = 0
-			return 0
+			return(0)
 		self.prev_roll_value = self.roll_value
 		probs = self.AI.eval_reroll()
 		choice = choose_from_probs(probs)
@@ -298,7 +300,7 @@ class Player(object):
 		if self.reroll==1 and self.game.record_game:
 			self.game.game_record_file.write("REROLL: player %d is rerolling!\n" % self.order)
 		self.AI.record_reroll()
-		return 0
+		return(0)
 
 	def decide_steal(self):
 		"""
@@ -333,7 +335,7 @@ class Player(object):
 				val = 2 * val 
 			if self.game.record_game and val > 0:
 				self.game.game_record_file.write('BAKERY: player %d receives %d coins (now has %d)\n' % (self.order, val, self.coins + val))
-			return val 
+			return(val )
 		if self.roll_value == 4:
 			val = self.buildings.convenience_store 
 			if self.buildings.shopping_mall==1:
@@ -342,27 +344,27 @@ class Player(object):
 				val = 3 * val 
 			if self.game.record_game and val > 0:
 				self.game.game_record_file.write('CONVENIENCE STORE: player %d receives %d coins (now has %d)\n' % (self.order, val, self.coins + val))
-			return val 
+			return(val )
 		if self.roll_value == 7:
 			val = 3 * self.buildings.cheese_factory * self.buildings.ranch 
 			if self.game.record_game and val > 0:
 				self.game.game_record_file.write('RANCH: player %d receives %d coins (now has %d)\n' % (self.order, val, self.coins + val ))
-			return val 
+			return(val )
 		if self.roll_value == 8:
 			val = 3 * self.buildings.furniture_factory * (self.buildings.mine + self.buildings.forest)
 			if self.game.record_game and val > 0:
 				self.game.game_record_file.write('FURNITURE FACTORY: player %d receives %d coins (now has %d)\n' % (self.order, val, self.coins + val ))
-			return val 
+			return(val )
 		if self.roll_value in [11, 12]:
 			val = 2 * self.buildings['fruit&veg_market'] * (self.buildings.wheat_field + self.buildings.apple_orchard)
 			if self.game.record_game and val > 0:
 				self.game.game_record_file.write('FRUIT&VEG MARKET: player %d receives %d coins (now has %d)\n' % (self.order, val, self.coins + val ))
-			return val 
-		return 0
+			return(val )
+		return( 0)
 
 	def calculate_purple(self):
-		if self.roll_value <> 6:
-			return 0 
+		if self.roll_value != 6:
+			return( 0 )
 		#steal 2 coins from each other player
 		if self.buildings.stadium:
 			for i in range(1,4):
@@ -405,7 +407,7 @@ class Player(object):
 			if self.game.record_game:
 				self.game.game_record_file.write('BUSINESS CENTER: player %d swapped a(n) %s for player %d''s %s!\n' % (self.order, self_building, target_player.order, opponent_building))
 
-		return 0 
+		return( 0 )
 
 
 
@@ -433,11 +435,11 @@ class Player(object):
 		#not buying is always an option, hence the last entry is always 1
 		mask = [1] * 20
 		for i in range(19):
-			if self.coins < building_cost[BUILDING_ORDER[i]]:
+			if self.coins < building_cost[list(BUILDING_ORDER)[i]]:
 				mask[i] = 0
-			elif self.game.building_supply[BUILDING_ORDER[i]] == 0:
+			elif self.game.building_supply[list(BUILDING_ORDER)[i]] == 0:
 				mask[i] = 0
-			elif self.buildings[BUILDING_ORDER[i]] == player_limit[BUILDING_ORDER[i]]:
+			elif self.buildings[list(BUILDING_ORDER)[i]] == player_limit[list(BUILDING_ORDER)[i]]:
 				mask[i] = 0
 		self.buy_mask = mask 
 
@@ -446,6 +448,6 @@ class Player(object):
 		buildings = self.buildings 
 		if buildings.shopping_mall + buildings.station +  buildings.amusement_park + buildings.radio_tower == 4:
 			self.win = 1
-			return True 
-		return False 
+			return( True )
+		return( False )
 

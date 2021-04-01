@@ -13,7 +13,7 @@ import os
 
 class Game(object):
 	def __init__(self, id, pre_existing_players = None, name='', options=None):
-		if 'full_record' in options and options['full_record'] <> '':
+		if 'full_record' in options and options['full_record'] != '':
 			self.full_record = True 
 			if not os.path.exists(options['full_record']):
 				with open(options['full_record'],'w') as f:
@@ -45,7 +45,7 @@ class Game(object):
 		self.turn = 0
 		if 'game_record_filename' not in options:
 			self.record_game=False
-		elif options['game_record_filename'] <> '':
+		elif options['game_record_filename'] != '':
 			self.record_game = True
 			self.game_record_file = open(options['game_record_filename'], 'a')
 		else:
@@ -55,7 +55,7 @@ class Game(object):
 
 	def run(self, silent=False):
 		if not silent:
-			print 'Beginning game #%s' % self.id 
+			print('Beginning game #%s' % self.id)
 		if self.record_game:
 			self.game_record_file.write('---BEGIN GAME %s---\n' % self.id)
 		current_player = self.players[0]
@@ -73,11 +73,11 @@ class Game(object):
 			else:
 				current_player = self.get_next_player(current_player)
 			if self.turn % 200 == 0 and not silent:
-				print 'turn %s' % self.turn
+				print( 'turn %s' % self.turn)
 				for player in self.players:
-					print player.coins
+					print(player.coins)
 		if not silent:
-			print 'Player %d, order %d won in %d turns' % (current_player.id, current_player.order, self.turn) 
+			print( 'Player %d, order %d won in %d turns' % (current_player.id, current_player.order, self.turn))
 		self.completed=True
 		if self.record_game:
 			self.game_record_file.write('Player %d, order %d won in %d turns\n' % (current_player.id, current_player.order, self.turn) )
@@ -116,7 +116,7 @@ class Game(object):
 				shared.buy_history_turn += player.buy_history_turn
 				player.flush_history(flush_shared=False)
 
-		return self.players 
+		return(self.players )
 
 	def flush_player_history(self):
 		for player in self.players:
@@ -127,17 +127,17 @@ class Game(object):
 			player.initialize_ai()
 
 	def get_next_player(self, player, offset=1):
-		return self.players[(player.order + offset) % 4]
+		return(self.players[(player.order + offset) % 4])
 
 	def activate_red(self, player):
 		"""
 		this is where players lose money to other players"""
 		roll_value = player.roll_value 
 		if roll_value not in [3,9,10]:
-			return 0
+			return(0)
 		max_amount = player.coins 
 		if max_amount == 0:
-			return 0
+			return(0)
 		if roll_value==3:
 			for i in range(1,4):
 				target_player = self.get_next_player(player,i)
@@ -168,7 +168,7 @@ class Game(object):
 				if self.record_game and final_cost > 0:
 					self.game_record_file.write('FAMILY RESTAURANT: transferring %d coins from player %d (now has %d) to player %d (now has %d)\n' % 
 						(final_cost, player.order, player.coins, target_player.order, target_player.coins))
-		return 0
+		return(0)
 
 	def activate_blue(self, player):
 		"""
@@ -176,7 +176,7 @@ class Game(object):
 		"""
 		roll_value = player.roll_value 
 		if roll_value not in [1,2,5,9,10]:
-			return 0 
+			return(0 )
 		for target_player in self.players:
 			if roll_value==1:
 				target_player.coins += target_player.buildings.wheat_field 
@@ -199,7 +199,7 @@ class Game(object):
 				if self.record_game and target_player.buildings.apple_orchard > 0:
 					self.game_record_file.write("APPLE ORCHARD: player %d gets %d coins (now has %d)\n" % (target_player.order, target_player.buildings.mine*3, target_player.coins))
 
-		return 0 
+		return(0)
 
 	def train_players(self):
 		for player in self.players:
@@ -213,7 +213,7 @@ class Game(object):
 		header = ['game_id','turn_id']
 		for i in range(4):
 			header+= [('p%d_' % i) + x for x in (BUILDING_ORDER + ['coins','win'])]
-		return header 
+		return(header )
 
 	def record_full_game_state(self):
 		#the completed boolean will 
